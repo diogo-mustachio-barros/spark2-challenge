@@ -8,6 +8,7 @@ object SimpleApp {
   // DataFrame headers
   val SENTIMENT_POLARITY_HEADER: String = "Sentiment_Polarity"
   val AVERAGE_SENTIMENT_POLARITY_HEADER: String = "Average_Sentiment_Polarity"
+  val RATING_HEADER: String = "Rating"
 
   // DataFrames
   var appsDf: DataFrame = null
@@ -32,7 +33,10 @@ object SimpleApp {
     this.userReviewsDf = spark.read.option("header", true).csv(userReviewsFile)
 
     // Part 1
-    part1()
+    // part1()
+
+    // Part 2
+    part2()
     
     spark.stop()
   }
@@ -46,5 +50,45 @@ object SimpleApp {
       .groupBy("App")
       .agg(
         coalesce(avg(SENTIMENT_POLARITY_HEADER), lit(0)).as(AVERAGE_SENTIMENT_POLARITY_HEADER))
+  }
+
+
+
+  def part2(): Unit = {
+    // TODO: If file already exists, delete it
+
+    val df = getAppsWithRatingGreaterOrEqual(4.0)
+      .orderBy(desc(RATING_HEADER))
+    
+    // TODO: improve, check https://sparkbyexamples.com/spark/spark-write-dataframe-single-csv-file/
+    toCsvFolder(df, "best_apps.csv")
+  }
+  
+  def getAppsWithRatingGreaterOrEqual(rating: Double): DataFrame = {
+    return this.appsDf
+      .filter(col(RATING_HEADER) >= rating && col(RATING_HEADER) =!= Double.NaN)
+  }
+
+  // Creates a folder named <outputFilePath>  with a file for each spark partition
+  def toCsvFolderPartitioned(df: DataFrame, outputFilePath: String): Unit = {
+    df.write.options(Map("header"->"true", "delimiter"->","))
+            .csv(outputFilePath)
+  }
+
+  // Creates a folder named <outputFilePath>  with a single file
+  def toCsvFolder(df: DataFrame, outputFilePath: String): Unit = {
+    df.coalesce(1)
+      .write.options(Map("header"->"true", "delimiter"->","))
+            .csv(outputFilePath)
+  }
+
+  // Creates a single file named <outputFilePath> by joining all partitions
+  def toCsvFileNaive(df: DataFrame, outputFilePath: String): Unit = {
+    // TODO
+  }
+
+  // Creates a single file named <outputFilePath> by joining all partition files
+  def toCsvFile(df: DataFrame, outputFilePath: String): Unit = {
+    // TODO
   }
 }
