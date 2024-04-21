@@ -5,36 +5,46 @@ import org.apache.spark.sql.functions._
 
 object SimpleApp {
   
-  val SENTIMENT_POLARITY_HEADER = "Sentiment_Polarity"
-  val AVERAGE_SENTIMENT_POLARITY_HEADER = "Average_Sentiment_Polarity"
+  // DataFrame headers
+  val SENTIMENT_POLARITY_HEADER: String = "Sentiment_Polarity"
+  val AVERAGE_SENTIMENT_POLARITY_HEADER: String = "Average_Sentiment_Polarity"
+
+  // DataFrames
+  var appsDf: DataFrame = null
+  var userReviewsDf: DataFrame = null
   
   def main(args: Array[String]): Unit = {
-
-    
+    // If not enough args, stop
     if (args.length < 2) {
       println("Expected path arguments: <googleplaystore.csv> <googleplaystore_user_reviews.csv>")
       return
     }
 
-    val store_file = args(0)
-    val user_reviews_file = args(1)
+    // Get file paths from args
+    val appsFile        = args(0)
+    val userReviewsFile = args(1)
     
+    // Initialize Spark
     val spark = SparkSession.builder.appName("Simple Application").getOrCreate()
 
-    val df = spark.read
-      .option("header",true)
-      .csv(user_reviews_file);
+    // Initialize DataFrames
+    this.appsDf        = spark.read.option("header", true).csv(appsFile)
+    this.userReviewsDf = spark.read.option("header", true).csv(userReviewsFile)
 
     // Part 1
-    part1(df).show();
+    part1()
     
     spark.stop()
   }
   
-  def part1(df: DataFrame): DataFrame = {
-      return df
-        .groupBy("App")
-        .agg(
-          coalesce(avg(SENTIMENT_POLARITY_HEADER), lit(0)).as(AVERAGE_SENTIMENT_POLARITY_HEADER))
+  def part1(): Unit = {
+    getAverageSentimentPolarityByApp().show()
+  }
+
+  def getAverageSentimentPolarityByApp(): DataFrame = {
+    return this.userReviewsDf
+      .groupBy("App")
+      .agg(
+        coalesce(avg(SENTIMENT_POLARITY_HEADER), lit(0)).as(AVERAGE_SENTIMENT_POLARITY_HEADER))
   }
 }
