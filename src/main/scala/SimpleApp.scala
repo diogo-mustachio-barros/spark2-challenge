@@ -5,7 +5,11 @@ import org.apache.spark.sql.functions._
 
 object SimpleApp {
   
+  val SENTIMENT_POLARITY_HEADER = "Sentiment_Polarity"
+  val AVERAGE_SENTIMENT_POLARITY_HEADER = "Average_Sentiment_Polarity"
+  
   def main(args: Array[String]): Unit = {
+
     
     if (args.length < 2) {
       println("Expected path arguments: <googleplaystore.csv> <googleplaystore_user_reviews.csv>")
@@ -28,9 +32,9 @@ object SimpleApp {
   }
   
   def part1(df: DataFrame): DataFrame = {
-      return df.filter(col("Sentiment_Polarity").isNotNull)
+      return df
         .groupBy("App")
         .agg(
-          coalesce(avg("Sentiment_Polarity"), lit(0)).as("Average_Sentiment_Polarity"))
+          coalesce(avg(SENTIMENT_POLARITY_HEADER), lit(0)).as(AVERAGE_SENTIMENT_POLARITY_HEADER))
   }
 }
