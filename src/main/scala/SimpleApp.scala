@@ -1,5 +1,7 @@
 /* SimpleApp.scala */
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
 
 object SimpleApp {
   
@@ -14,18 +16,21 @@ object SimpleApp {
     val user_reviews_file = args(1)
     
     val spark = SparkSession.builder.appName("Simple Application").getOrCreate()
-    
-    // val logData = spark.read.textFile(logFile).cache()
-    // val numAs = logData.filter(line => line.contains("a")).count()
-    // val numBs = logData.filter(line => line.contains("b")).count()
-    // println(s"Lines with a: $numAs, Lines with b: $numBs")
 
     val df = spark.read
       .option("header",true)
-      .csv(user_reviews_file)
-    
-    df.printSchema()
+      .csv(user_reviews_file);
 
+    // Part 1
+    part1(df).show();
+    
     spark.stop()
+  }
+  
+  def part1(df: DataFrame): DataFrame = {
+      return df.filter(col("Sentiment_Polarity").isNotNull)
+        .groupBy("App")
+        .agg(
+          coalesce(avg("Sentiment_Polarity"), lit(0)).as("Average_Sentiment_Polarity"))
   }
 }
