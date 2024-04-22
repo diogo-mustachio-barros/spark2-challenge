@@ -2,6 +2,7 @@
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import java.io.File
 
 object SimpleApp {
   
@@ -55,13 +56,17 @@ object SimpleApp {
 
 
   def part2(): Unit = {
-    // TODO: If file already exists, delete it
+    val outputPath = "best_apps.csv"
+
+    // If file/folder already exists, delete it
+    val outputFile = new File(outputPath)
+    Util.deleteRecursively(outputFile)
 
     val df = getAppsWithRatingGreaterOrEqual(4.0)
       .orderBy(desc(RATING_HEADER))
     
     // TODO: improve, check https://sparkbyexamples.com/spark/spark-write-dataframe-single-csv-file/
-    toCsvFolder(df, "best_apps.csv")
+    toCsvFolder(df, outputPath)
   }
   
   def getAppsWithRatingGreaterOrEqual(rating: Double): DataFrame = {
