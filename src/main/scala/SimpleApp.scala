@@ -76,7 +76,7 @@ object SimpleApp {
 
   // Creates a folder named <outputFilePath>  with a file for each spark partition
   def toCsvFolderPartitioned(df: DataFrame, outputFilePath: String): Unit = {
-    df.write.options(Map("header"->"true", "delimiter"->","))
+    df.write.options(Map("header"->"true", "delimiter"->"§"))
             .csv(outputFilePath)
   }
 
