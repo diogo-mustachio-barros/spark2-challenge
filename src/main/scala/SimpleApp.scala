@@ -83,7 +83,7 @@ object SimpleApp {
   // Creates a folder named <outputFilePath>  with a single file
   def toCsvFolder(df: DataFrame, outputFilePath: String): Unit = {
     df.coalesce(1)
-      .write.options(Map("header"->"true", "delimiter"->","))
+      .write.options(Map("header"->"true", "delimiter"->"§"))
             .csv(outputFilePath)
   }
 
@@ -95,5 +95,11 @@ object SimpleApp {
   // Creates a single file named <outputFilePath> by joining all partition files
   def toCsvFile(df: DataFrame, outputFilePath: String): Unit = {
     // TODO
+  }
+
+
+
+  def part3(): Unit = {
+
   }
 }
