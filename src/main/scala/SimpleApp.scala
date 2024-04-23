@@ -57,7 +57,10 @@ object SimpleApp {
     // part2()
 
     // Part 3
-    part3()
+    // part3()
+
+    // Part 4
+    part4()
     
     spark.stop()
   }
@@ -147,9 +150,11 @@ object SimpleApp {
     val priceStringToEuro = udf((price: String) => {
       if (price.equals("0")) {
         0.0
-      } else {
+      } else if (price.startsWith("$")) {
         // TODO: maybe round it to two decimal places?
         price.drop(1).toDouble * 0.9
+      } else {
+        0.0
       }
     })
 
@@ -181,5 +186,22 @@ object SimpleApp {
         col(CURRENT_VERSION_HEADER) as "Current_Version",
         col(ANDROID_VERSION_HEADER) as "Minimum_Android_Ver"
         )
+  }
+
+
+  def part4(): Unit = {
+    val df = this.getSquashedApps().join(getAverageSentimentPolarityByApp(), APP_HEADER)
+    val outputPath = "googleplaystore_cleaned"
+
+    // If file already exists, delete it
+    val outputFile = new File(outputPath)
+    Util.deleteRecursively(outputFile)
+
+    toParquetGzipFolder(df, outputPath)
+  }
+
+  def toParquetGzipFolder(df: DataFrame, outputFilePath: String): Unit =  {
+    df.write.option("compression", "gzip")
+            .parquet(outputFilePath)
   }
 }
