@@ -227,7 +227,7 @@ object SimpleApp {
   }
 
   def part5(): Unit = {
-    val df = 
+    val df = getGooglePlayStoreMetrics()
     
     toParquetGzipFolder(df, "googleplaystore_metrics")
   }
