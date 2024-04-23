@@ -3,6 +3,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.expressions.{Window}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+
 import java.io.File
 
 object SimpleApp {
@@ -60,7 +62,10 @@ object SimpleApp {
     // part3()
 
     // Part 4
-    part4()
+    // part4()
+
+    // Part 5
+    part5()
     
     spark.stop()
   }
@@ -158,13 +163,26 @@ object SimpleApp {
       }
     })
 
-    return this.appsDF
+    val safeDoubleCast = udf[java.lang.Double, String]((s: String) => {
+      try { 
+        val d = s.toDouble
+        if (d.isNaN()) {
+          null
+        } else {
+          d
+        }
+      } catch { 
+        case _ => null 
+      }
+    })
+
+    val df = this.appsDF
       // Squash apps to only the one with max reviews
       .join(maxReviewsDF, Seq(APP_HEADER, REVIEWS_HEADER), "inner")
       // Join with list of categories for each app
       .join(categoriesDF, APP_HEADER)
       // Modify other columns
-      .withColumn(RATING_HEADER, col(RATING_HEADER).cast("double"))
+      .withColumn(RATING_HEADER, safeDoubleCast(col(RATING_HEADER)))
       .withColumn(REVIEWS_HEADER, col(REVIEWS_HEADER).cast("long"))
       .withColumn(SIZE_HEADER, sizeStringToDouble(col(SIZE_HEADER)))
       .withColumn(PRICE_HEADER, priceStringToEuro(col(PRICE_HEADER)))
@@ -185,7 +203,9 @@ object SimpleApp {
         col(LAST_UPDATED_HEADER) as "Last_Updated",
         col(CURRENT_VERSION_HEADER) as "Current_Version",
         col(ANDROID_VERSION_HEADER) as "Minimum_Android_Ver"
-        )
+      )
+
+    return df
   }
 
 
@@ -193,15 +213,32 @@ object SimpleApp {
     val df = this.getSquashedApps().join(getAverageSentimentPolarityByApp(), APP_HEADER)
     val outputPath = "googleplaystore_cleaned"
 
-    // If file already exists, delete it
-    val outputFile = new File(outputPath)
-    Util.deleteRecursively(outputFile)
-
     toParquetGzipFolder(df, outputPath)
   }
 
   def toParquetGzipFolder(df: DataFrame, outputFilePath: String): Unit =  {
-    df.write.option("compression", "gzip")
+    // If file already exists, delete it
+    val outputFile = new File(outputFilePath)
+    Util.deleteRecursively(outputFile)
+
+    df.coalesce(1)
+      .write.option("compression", "gzip")
             .parquet(outputFilePath)
+  }
+
+  def part5(): Unit = {
+    val df = 
+    
+    toParquetGzipFolder(df, "googleplaystore_metrics")
+  }
+
+  def getGooglePlayStoreMetrics(): DataFrame = {
+    return this.getSquashedApps()
+      .join(getAverageSentimentPolarityByApp(), APP_HEADER)
+      .withColumn("Genre", explode(col(GENRES_HEADER)))
+      .groupBy("Genre")
+      .agg( count(APP_HEADER) as "Count"
+          , avg(RATING_HEADER) as "Average_Rating"
+          , avg(AVERAGE_SENTIMENT_POLARITY_HEADER) as AVERAGE_SENTIMENT_POLARITY_HEADER)
   }
 }

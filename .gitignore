@@ -4,7 +4,12 @@
 project/*
 target/*
 data/*
+
 best_apps.csv
 best_apps.csv/*
+
 googleplaystore_cleaned
 googleplaystore_cleaned/*
+
+googleplaystore_metrics
+googleplaystore_metrics/*
