@@ -45,4 +45,14 @@ class UtilTest extends AnyFunSuite {
     test("Util.parseDollarPrice.invalid") {
         assert(Util.parseDollarPrice("") == None)
     }
+
+    test("Util.dollarsToEuros.zero") {
+        val res = Util.dollarsToEuros(0)
+        assert(compareDoubles(res, 0))
+    }
+
+    test("Util.dollarsToEuros.valid") {
+        val res = Util.dollarsToEuros(4.99)
+        assert(compareDoubles(res, 4.491))
+    }
 }
