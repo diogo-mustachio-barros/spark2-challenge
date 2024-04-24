@@ -13,7 +13,9 @@ object Util {
     }
 
     def parseSizeInMB(s: String): Option[Double] = {
-        if (s.endsWith("M")) {
+        if (s.endsWith("G")) {
+            safeParseDouble(s.dropRight(1)).map(_ * 1000) 
+        } else if (s.endsWith("M")) {
             safeParseDouble(s.dropRight(1))
         } else if (s.endsWith("k")) {
             safeParseDouble(s.dropRight(1)).map(_ / 1000) 
