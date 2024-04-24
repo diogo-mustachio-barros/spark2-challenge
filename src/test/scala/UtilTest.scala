@@ -55,4 +55,24 @@ class UtilTest extends AnyFunSuite {
         val res = Util.dollarsToEuros(4.99)
         assert(compareDoubles(res, 4.491))
     }
+
+    test("Util.safeParseDouble.zero") {
+        val res = Util.safeParseDouble("0")
+        assert(res.isDefined)
+        assert(compareDoubles(res.get, 0))
+    }
+
+    test("Util.safeParseDouble.valid") {
+        val res = Util.safeParseDouble("1.23")
+        assert(res.isDefined)
+        assert(compareDoubles(res.get, 1.23))
+    }
+
+    test("Util.safeParseDouble.nan") {
+        assert(Util.safeParseDouble("NaN") == None)
+    }
+
+    test("Util.safeParseDouble.invalid") {
+        assert(Util.safeParseDouble("Lorem ipsum") == None)
+    }
 }
