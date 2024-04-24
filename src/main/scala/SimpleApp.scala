@@ -62,10 +62,10 @@ object SimpleApp {
     // part3()
 
     // Part 4
-    // part4()
+    part4()
 
     // Part 5
-    part5()
+    // part5()
     
     spark.stop()
   }
@@ -73,15 +73,6 @@ object SimpleApp {
   def part1(): Unit = {
     getAverageSentimentPolarityByApp().show()
   }
-
-  def getAverageSentimentPolarityByApp(): DataFrame = {
-    return this.userReviewsDF
-      .groupBy(APP_HEADER)
-      .agg(
-        coalesce(avg(SENTIMENT_POLARITY_HEADER), lit(0)).as(AVERAGE_SENTIMENT_POLARITY_HEADER))
-  }
-
-
 
   def part2(): Unit = {
     val outputPath = "best_apps.csv"
@@ -95,6 +86,30 @@ object SimpleApp {
     
     // TODO: improve, check https://sparkbyexamples.com/spark/spark-write-dataframe-single-csv-file/
     toCsvFolder(df, outputPath)
+  }
+  
+  def part3(): Unit = {
+    getSquashedApps().show()
+  }
+  
+  def part4(): Unit = {
+    val df = this.getSquashedApps().join(getAverageSentimentPolarityByApp(), APP_HEADER)
+    val outputPath = "googleplaystore_cleaned"
+    
+    toParquetGzipFolder(df, outputPath)
+  }
+  
+  def part5(): Unit = {
+    val df = getGooglePlayStoreMetrics()
+    
+    toParquetGzipFolder(df, "googleplaystore_metrics")
+  }
+  
+  def getAverageSentimentPolarityByApp(): DataFrame = {
+    return this.userReviewsDF
+      .groupBy(APP_HEADER)
+      .agg(
+        coalesce(avg(SENTIMENT_POLARITY_HEADER), lit(0)).as(AVERAGE_SENTIMENT_POLARITY_HEADER))
   }
   
   def getAppsWithRatingGreaterOrEqual(rating: Double): DataFrame = {
@@ -116,20 +131,14 @@ object SimpleApp {
   }
 
   // Creates a single file named <outputFilePath> by joining all partitions
-  def toCsvFileNaive(df: DataFrame, outputFilePath: String): Unit = {
-    // TODO
-  }
+  // def toCsvFileNaive(df: DataFrame, outputFilePath: String): Unit = {
+  //   // TODO
+  // }
 
   // Creates a single file named <outputFilePath> by joining all partition files
-  def toCsvFile(df: DataFrame, outputFilePath: String): Unit = {
-    // TODO
-  }
-
-
-
-  def part3(): Unit = {
-    getSquashedApps().show()
-  }
+  // def toCsvFile(df: DataFrame, outputFilePath: String): Unit = {
+  //   // TODO
+  // }
 
   def getSquashedApps(): DataFrame = {
     val w = Window.partitionBy(APP_HEADER)
@@ -142,39 +151,17 @@ object SimpleApp {
       .groupBy(APP_HEADER)
       .agg(collect_set(CATEGORY_HEADER) as "Categories")
 
-    val sizeStringToDouble = udf((size: String) => {
-      if (size.endsWith("M")) {
-        size.dropRight(1).toDouble
-      } else if (size.endsWith("k")) {
-        size.dropRight(1).toDouble / 1000
-      } else {
-        0.0
-      }
-    })
 
-    val priceStringToEuro = udf((price: String) => {
-      if (price.equals("0")) {
-        0.0
-      } else if (price.startsWith("$")) {
-        // TODO: maybe round it to two decimal places?
-        price.drop(1).toDouble * 0.9
-      } else {
-        0.0
-      }
-    })
+    // User defined functions to apply to columns
+    val safeDoubleCast = udf(Util.safeParseDouble _)
 
-    val safeDoubleCast = udf[java.lang.Double, String]((s: String) => {
-      try { 
-        val d = s.toDouble
-        if (d.isNaN()) {
-          null
-        } else {
-          d
-        }
-      } catch { 
-        case _ => null 
-      }
-    })
+    val parseSize = udf(Util.parseSizeInMB _)
+
+    val parsePrice = udf(
+      Util.parseDollarPrice(_: String)
+          .map(Util.dollarsToEuros)
+    )
+
 
     val df = this.appsDF
       // Squash apps to only the one with max reviews
@@ -184,8 +171,8 @@ object SimpleApp {
       // Modify other columns
       .withColumn(RATING_HEADER, safeDoubleCast(col(RATING_HEADER)))
       .withColumn(REVIEWS_HEADER, col(REVIEWS_HEADER).cast("long"))
-      .withColumn(SIZE_HEADER, sizeStringToDouble(col(SIZE_HEADER)))
-      .withColumn(PRICE_HEADER, priceStringToEuro(col(PRICE_HEADER)))
+      .withColumn(SIZE_HEADER, parseSize(col(SIZE_HEADER)))
+      .withColumn(PRICE_HEADER, parsePrice(col(PRICE_HEADER)))
       .withColumn(GENRES_HEADER, split(col(GENRES_HEADER), ";"))
       .withColumn(LAST_UPDATED_HEADER, to_date(col(LAST_UPDATED_HEADER), "MMMM dd, yyyy"))
       // Only the columns we need by the order we want (+ renames)
@@ -208,14 +195,6 @@ object SimpleApp {
     return df
   }
 
-
-  def part4(): Unit = {
-    val df = this.getSquashedApps().join(getAverageSentimentPolarityByApp(), APP_HEADER)
-    val outputPath = "googleplaystore_cleaned"
-
-    toParquetGzipFolder(df, outputPath)
-  }
-
   def toParquetGzipFolder(df: DataFrame, outputFilePath: String): Unit =  {
     // If file already exists, delete it
     val outputFile = new File(outputFilePath)
@@ -224,12 +203,6 @@ object SimpleApp {
     df.coalesce(1)
       .write.option("compression", "gzip")
             .parquet(outputFilePath)
-  }
-
-  def part5(): Unit = {
-    val df = getGooglePlayStoreMetrics()
-    
-    toParquetGzipFolder(df, "googleplaystore_metrics")
   }
 
   def getGooglePlayStoreMetrics(): DataFrame = {
