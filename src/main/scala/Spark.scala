@@ -18,9 +18,10 @@ object Spark {
     val CURRENT_VERSION_HEADER: String = "Current Ver"
     val ANDROID_VERSION_HEADER: String = "Android Ver"
 
-    val SENTIMENT_POLARITY_HEADER: String = "Sentiment_Polarity"
     val TRANSLATED_REVIEW_HEADER: String = "Translated_Review"
     val SENTIMENT_HEADER: String = "Sentiment"
+    val SENTIMENT_POLARITY_HEADER: String = "Sentiment_Polarity"
+    val SENTIMENT_SUBJECTIVITY_HEADER: String = "Sentiment_Subjectivity"
 
     val AVERAGE_SENTIMENT_POLARITY_HEADER: String = "Average_Sentiment_Polarity"
     
