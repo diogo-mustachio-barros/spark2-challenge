@@ -33,19 +33,21 @@ object SimpleApp {
     this.userReviewsDF = spark.read.option("header", true).csv(userReviewsFile)
 
     // Part 1
-    // part1()
+    println("> Part 1:")
+    part1()
 
     // Part 2
-    // part2()
+    part2()
 
     // Part 3
-    // part3()
+    println("> Part 3:")
+    part3()
 
     // Part 4
     part4()
 
     // Part 5
-    // part5()
+    part5()
     
     spark.stop()
   }
@@ -84,17 +86,6 @@ object SimpleApp {
       .write.options(Map("header"->"true", "delimiter"->"§"))
             .csv(outputFilePath)
   }
-
-  // Creates a single file named <outputFilePath> by joining all partitions
-  // def toCsvFileNaive(df: DataFrame, outputFilePath: String): Unit = {
-  //   // TODO
-  // }
-
-  // Creates a single file named <outputFilePath> by joining all partition files
-  // def toCsvFile(df: DataFrame, outputFilePath: String): Unit = {
-  //   // TODO
-  // }
-
 
   def toParquetGzipFolder(df: DataFrame, outputFilePath: String): Unit =  {
     // If file already exists, delete it
