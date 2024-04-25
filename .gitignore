@@ -3,7 +3,6 @@
 .vscode/*
 project/*
 target/*
-data/*
 
 best_apps.csv
 best_apps.csv/*
