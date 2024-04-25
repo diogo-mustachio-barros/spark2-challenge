@@ -7,7 +7,7 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 
-class SimpleAppTest extends AnyFunSuite with DataFrameSuiteBase {
+class SparkTest extends AnyFunSuite with DataFrameSuiteBase {
 
     // var spark: SparkSession = null
     // var appsDF: DataFrame = null
